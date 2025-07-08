@@ -11,6 +11,9 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- CONFIGURATION ---
+CURRENCY = "₹" # <--- CHANGED: Set currency to Indian Rupee
+
 # --- DATA PERSISTENCE ---
 # Define file paths for storing data
 INCOME_FILE = 'income_data.csv'
@@ -110,17 +113,16 @@ with tab1:
     balance = total_income - total_expenses
 
     col1, col2, col3 = st.columns(3)
-    col1.metric("Total Income", f"€{total_income:,.2f}", delta_color="normal")
-    col2.metric("Total Expenses", f"€{total_expenses:,.2f}", delta_color="inverse")
+    # --- CHANGED: Using the CURRENCY variable in f-strings ---
+    col1.metric("Total Income", f"{CURRENCY}{total_income:,.2f}", delta_color="normal")
+    col2.metric("Total Expenses", f"{CURRENCY}{total_expenses:,.2f}", delta_color="inverse")
     
-    # Determine the "delta" for the balance metric
-    balance_delta = balance
+    balance_delta_text = ""
     if total_income > 0:
-        balance_delta_text = f"{balance_delta/total_income:.2%}"
-    else:
-        balance_delta_text = ""
+        balance_delta_text = f"{(balance/total_income):.2%}"
 
-    col3.metric("Balance", f"€{balance:,.2f}", f"{balance_delta_text} of Income", delta_color="normal" if balance >= 0 else "inverse")
+    # --- CHANGED: Using the CURRENCY variable in f-strings ---
+    col3.metric("Balance", f"{CURRENCY}{balance:,.2f}", f"{balance_delta_text} of Income", delta_color="normal" if balance >= 0 else "inverse")
 
     st.markdown("---")
 
@@ -136,7 +138,8 @@ with tab1:
                              values='Amount',
                              title='Expense Distribution',
                              hole=.3)
-            fig_pie.update_traces(textposition='inside', textinfo='percent+label')
+            # --- CHANGED: Add currency to hover data in the pie chart ---
+            fig_pie.update_traces(textposition='inside', textinfo='percent+label', hovertemplate='<b>%{label}</b><br>Amount: ' + CURRENCY + '%{value:,.2f}<br>Percentage: %{percent}')
             st.plotly_chart(fig_pie, use_container_width=True)
         else:
             st.info("No expense data to display.")
@@ -157,6 +160,8 @@ with tab1:
                              title='Monthly Income vs. Expense',
                              barmode='group',
                              color_discrete_map={'Income': 'green', 'Expense': 'red'})
+            # --- CHANGED: Add currency to hover data in the bar chart ---
+            fig_bar.update_traces(hovertemplate='<b>%{x}</b><br>%{data.name}: ' + CURRENCY + '%{y:,.2f}<extra></extra>')
             st.plotly_chart(fig_bar, use_container_width=True)
         else:
             st.info("No income or expense data to display.")
@@ -166,13 +171,15 @@ with tab2:
 
     st.subheader("Income History")
     if not income_df.empty:
-        st.dataframe(income_df.sort_values(by='Date', ascending=False), use_container_width=True)
+        # --- CHANGED: Format the 'Amount' column with the currency ---
+        st.dataframe(income_df.sort_values(by='Date', ascending=False).style.format({"Amount": "{}{:,.2f}".format(CURRENCY)}), use_container_width=True)
     else:
         st.info("No income records yet.")
 
     st.subheader("Expense History")
     if not expenses_df.empty:
-        st.dataframe(expenses_df.sort_values(by='Date', ascending=False), use_container_width=True)
+        # --- CHANGED: Format the 'Amount' column with the currency ---
+        st.dataframe(expenses_df.sort_values(by='Date', ascending=False).style.format({"Amount": "{}{:,.2f}".format(CURRENCY)}), use_container_width=True)
     else:
         st.info("No expense records yet.")
         
